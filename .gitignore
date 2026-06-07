@@ -1,34 +1,32 @@
-# Gradle files
-.gradle/
-build/
+name: Build APK
+on:
+  workflow_dispatch:
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-# Local configuration file (sdk path, etc)
-local.properties
+      - name: Extract project
+        run: |
+          unzip yafta-github-ready.zip
+          cp -r yafta_project/. .
+          rm -rf yafta_project yafta-github-ready.zip
 
-# Log/OS Files
-*.log
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-# Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
-*.apk
-output-metadata.json
+      - uses: android-actions/setup-android@v3
 
-# IntelliJ
-*.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
+      - run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
 
-# Keystore files
-*.jks
-*.keystore
+      - run: chmod +x ./gradlew && ./gradlew assembleDebug
 
-# Google Services (e.g. APIs or Firebase)
-google-services.json
-
-# Android Profiling
-*.hprof
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yafta-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
